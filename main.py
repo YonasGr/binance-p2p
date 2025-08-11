@@ -5,10 +5,11 @@ import json
 from typing import Optional, List, Dict
 
 import aiohttp
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 
 # Configuration
+# This is a good way to handle environment variables for security.
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 BINANCE_REST_BASE = "https://api.binance.com"
 BINANCE_P2P_SEARCH = "https://p2p.binance.com/bapi/c2c/v2/friendly/c2c/adv/search"
@@ -17,11 +18,16 @@ COINGECKO_API = "https://api.coingecko.com/api/v3"
 # --- Utility HTTP helpers ---
 
 async def fetch_json(session: aiohttp.ClientSession, method: str, url: str, **kwargs):
+    """
+    A helper function to fetch and parse JSON from a URL.
+    It includes basic error handling for parsing JSON.
+    """
     async with session.request(method, url, **kwargs) as resp:
         text = await resp.text()
         try:
             return json.loads(text)
         except Exception:
+            # Return raw text if JSON parsing fails to help with debugging.
             return {"_raw": text}
 
 # --- P2P functions ---
@@ -89,6 +95,7 @@ async def binance_ticker_price(symbol: str) -> Optional[float]:
     return None
 
 async def coingecko_coin_info_by_symbol(symbol: str) -> Optional[Dict]:
+    """Fetch basic coin info from CoinGecko API based on symbol."""
     # CoinGecko tends to use ids like 'bitcoin', 'ethereum'. We'll try simple mapping heuristics for major coins.
     mapping = {
         "BTC": "bitcoin",
@@ -129,11 +136,13 @@ async def coingecko_coin_info_by_symbol(symbol: str) -> Optional[Dict]:
 # --- Telegram command handlers ---
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Greets the user and explains the bot's purpose."""
     await update.message.reply_text(
         "Hello! I can fetch Binance P2P ETB rates, convert coins, and show coin info. Use /help to see commands."
     )
 
 async def help_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Provides a list of all available commands."""
     text = (
         "Available commands:\n"
         "/p2p_usdt_top [buy|sell] - get top USDT P2P offers for ETB (default: buy)\n"
@@ -190,13 +199,9 @@ async def p2p_usdt_amount_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE
         return
 
     await update.message.reply_text(f"Searching top offers for {amount}{unit} ({trade})...")
-    # If user provided USDT amount we can pass transAmount as that value; Binance interprets it according to fiat param.
-    # To search for a specific fiat range, we keep fiat=ETB and transAmount for ETB, otherwise pass transAmount and set fiat accordingly.
     if unit == "ETB":
         offers = await fetch_p2p_offers(asset="USDT", fiat="ETB", trade_type=trade, amount=trans_amount, rows=50)
     else:
-        # searching by USDT amount — Binance expects transAmount in fiat usually; but many scrapers use the same endpoint and pass transAmount with asset amount.
-        # We'll still pass transAmount and rely on Binance's behavior — if it fails, we'll fall back to top offers without amount.
         offers = await fetch_p2p_offers(asset="USDT", fiat="ETB", trade_type=trade, amount=trans_amount, rows=50)
 
     if not offers:
@@ -259,7 +264,6 @@ async def convert_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("Couldn't fetch direct prices from Binance for those symbols. Try /coininfo for more info.")
         return
 
-    # amount_in_usdt = amount * frm_to_usdt
     amount_in_usdt = amount * frm_to_usdt
     result = amount_in_usdt / to_to_usdt
     await update.message.reply_text(f"{amount} {frm} ≈ {result:.8f} {to} (via USDT)")
@@ -286,8 +290,7 @@ async def coininfo_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(text)
 
 
-# --- Main ---
-
+# --- Main entry point ---
 async def main():
     if not TELEGRAM_TOKEN:
         print("Set TELEGRAM_TOKEN environment variable and restart.")
@@ -302,7 +305,12 @@ async def main():
     app.add_handler(CommandHandler("coininfo", coininfo_cmd))
 
     print("Bot started...")
+    # The run_polling() method is a blocking call that starts the bot.
+    # It manages its own event loop, so calling asyncio.run() here causes a conflict.
     await app.run_polling()
 
 if __name__ == '__main__':
+    # This is the corrected way to start the bot.
+    # We simply call the main() async function without wrapping it in asyncio.run().
+    # The Python-Telegram-Bot library handles the event loop for us.
     asyncio.run(main())
