@@ -1,27 +1,55 @@
-"""
-Telegram bot (Python) — Binance P2P + market data helper
+🤖 Binance P2P & Market Data Telegram Bot
 
-Features implemented:
-- /start, /help
-- /p2p_usdt_top [buy|sell] : show top P2P offers for USDT <-> ETB (default: BUY offers)
-- /p2p_usdt_amount <amount><unit> [buy|sell] : show top 10 offers for specific amount.
-   Examples: "/p2p_usdt_amount 5000ETB" or "/p2p_usdt_amount 50USDT sell"
-- /convert <from_symbol> <to_symbol> [amount]
-   Examples: "/convert BTC USDT 0.01" or "/convert TON SOL 10"
-- /coininfo <symbol> : basic market info (price, market cap, 24h change)
+A powerful and easy-to-use Telegram bot built with Python for quick access to Binance P2P offers and real-time market data. This bot helps you monitor P2P rates for USDT/ETB and get instant crypto conversions and coin details without needing to open the Binance app.
 
-Notes:
-- P2P data is fetched from Binance P2P endpoint used by their web UI (no API key required).
-- Public market price data is fetched from Binance public REST endpoints where possible; CoinGecko is used as fallback for metadata.
+✨ Features
 
-Dependencies:
-- python-telegram-bot (v20+)
-- aiohttp
-- python-dotenv (optional)
+The bot provides a set of simple commands to get the information you need, fast.
 
-Run:
-1. pip install python-telegram-bot aiohttp python-dotenv
-2. export TELEGRAM_TOKEN="<your token>"  (or create a .env file)
-3. python telegram_binance_p2p_bot.py
+/start & /help: Get a welcome message and a list of available commands.
 
-"""
+/p2p_usdt_top [buy|sell]: Shows the top P2P offers for the USDT <-> ETB pair. By default, it displays BUY offers.
+
+/p2p_usdt_amount <amount><unit> [buy|sell]: Lists the top 10 P2P offers for a specific amount.
+
+Examples: /p2p_usdt_amount 5000ETB or /p2p_usdt_amount 50USDT sell
+
+/convert <from_symbol> <to_symbol> [amount]: Converts one cryptocurrency to another.
+
+Examples: /convert BTC USDT 0.01 or /convert TON SOL 10
+
+/coininfo <symbol>: Displays basic market information for a given cryptocurrency, including its current price, market cap, and 24-hour change.
+
+🛠️ Dependencies
+
+This project relies on the following Python packages:
+
+python-telegram-bot (v20+)
+
+aiohttp
+
+python-dotenv (optional, for managing environment variables)
+
+🚀 Setup & Usage
+
+Follow these simple steps to get your bot up and running.
+
+Install the dependencies:
+
+pip install python-telegram-bot aiohttp python-dotenv
+
+
+Set up your Telegram Bot Token:
+Get your token from BotFather and set it as an environment variable.
+
+export TELEGRAM_TOKEN="<your_token>"
+
+
+Alternatively, you can create a .env file in the project's root directory with the following content:
+
+TELEGRAM_TOKEN="<your_token>"
+
+
+Run the bot:
+
+python telegram_binance_p2p_bot.py
